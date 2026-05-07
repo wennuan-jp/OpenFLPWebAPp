@@ -155,60 +155,109 @@ const PluginResolver: React.FC = () => {
 
       {result && (
         <div className="animate-fade-in">
-          {/* Instruments Section */}
-          {result.plugins.filter(p => p.type === 'Channel').length > 0 && (
-            <div style={{ marginBottom: '3rem' }}>
-              <h3 style={{ marginBottom: '1.5rem', paddingLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                Instruments
-                <span style={{ fontSize: '0.85rem', fontWeight: 400, color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
-                  ({result.plugins.filter(p => p.type === 'Channel').length})
-                </span>
-              </h3>
-              <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {result.plugins.filter(p => p.type === 'Channel').map((plugin, index) => (
-                  <div key={index} className="plugin-card">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.1rem' }}>
-                      <span style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-primary)' }}>
-                        {plugin.plugin_name}
-                      </span>
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', opacity: 0.7 }}>
-                        {plugin.name}
-                      </span>
-                    </div>
-                    <div className={`status-badge ${plugin.is_missing ? 'status-missing' : 'status-found'}`}>
-                      {plugin.is_missing ? 'Missing' : 'Installed'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', 
+            gap: '3rem',
+            alignItems: 'flex-start'
+          }}>
+            {/* Instruments Section */}
+            {(() => {
+              const instrumentGroups = result.plugins
+                .filter(p => p.type === 'Channel')
+                .reduce((acc, plugin) => {
+                  if (!acc[plugin.plugin_name]) {
+                    acc[plugin.plugin_name] = [];
+                  }
+                  acc[plugin.plugin_name].push(plugin);
+                  return acc;
+                }, {} as Record<string, Plugin[]>);
 
-          {/* Effects Section */}
-          {result.plugins.filter(p => p.type === 'Effect').length > 0 && (
-            <div>
-              <h3 style={{ marginBottom: '1.5rem', paddingLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                Effects
-                <span style={{ fontSize: '0.85rem', fontWeight: 400, color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
-                  ({result.plugins.filter(p => p.type === 'Effect').length})
-                </span>
-              </h3>
-              <div style={{ display: 'grid', gap: '0.75rem' }}>
-                {result.plugins.filter(p => p.type === 'Effect').map((plugin, index) => (
-                  <div key={index} className="plugin-card">
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--text-primary)' }}>
-                        {plugin.plugin_name}
-                      </span>
-                    </div>
-                    <div className={`status-badge ${plugin.is_missing ? 'status-missing' : 'status-found'}`}>
-                      {plugin.is_missing ? 'Missing' : 'Installed'}
-                    </div>
+              const instrumentEntries = Object.entries(instrumentGroups);
+
+              return instrumentEntries.length > 0 && (
+                <div>
+                  <h3 style={{ marginBottom: '1.5rem', paddingLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    Instruments
+                    <span style={{ fontSize: '0.85rem', fontWeight: 400, color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
+                      ({instrumentEntries.length} unique)
+                    </span>
+                  </h3>
+                  <div style={{ display: 'grid', gap: '1rem' }}>
+                    {instrumentEntries.map(([pluginName, plugins], index) => (
+                      <div key={index} className="plugin-card" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '1rem' }}>
+                        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-primary)' }}>
+                            {pluginName}
+                          </span>
+                          <div className={`status-badge ${plugins.some(p => p.is_missing) ? 'status-missing' : 'status-found'}`}>
+                            {plugins.some(p => p.is_missing) ? 'Missing' : 'Installed'}
+                          </div>
+                        </div>
+                        
+                        <div style={{ width: '100%', paddingLeft: '0.5rem' }}>
+                          <ul style={{ 
+                            listStyle: 'none', 
+                            padding: 0, 
+                            margin: 0,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.4rem'
+                          }}>
+                            {plugins.map((p, i) => (
+                              <li key={i} style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '0.6rem',
+                                color: 'var(--text-secondary)',
+                                fontSize: '0.85rem',
+                                fontWeight: 500
+                              }}>
+                                <div style={{ 
+                                  width: '4px', 
+                                  height: '4px', 
+                                  borderRadius: '50%', 
+                                  background: 'var(--accent-color)',
+                                  opacity: 0.6
+                                }} />
+                                {p.name}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+              );
+            })()}
+
+            {/* Effects Section */}
+            {result.plugins.filter(p => p.type === 'Effect').length > 0 && (
+              <div>
+                <h3 style={{ marginBottom: '1.5rem', paddingLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  Effects
+                  <span style={{ fontSize: '0.85rem', fontWeight: 400, color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
+                    ({result.plugins.filter(p => p.type === 'Effect').length})
+                  </span>
+                </h3>
+                <div style={{ display: 'grid', gap: '0.75rem' }}>
+                  {result.plugins.filter(p => p.type === 'Effect').map((plugin, index) => (
+                    <div key={index} className="plugin-card">
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontWeight: 700, fontSize: '1.2rem', color: 'var(--text-primary)' }}>
+                          {plugin.plugin_name}
+                        </span>
+                      </div>
+                      <div className={`status-badge ${plugin.is_missing ? 'status-missing' : 'status-found'}`}>
+                        {plugin.is_missing ? 'Missing' : 'Installed'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
           
           {result.plugins.length === 0 && (
             <div className="glass" style={{ padding: '3rem', textAlign: 'center' }}>
