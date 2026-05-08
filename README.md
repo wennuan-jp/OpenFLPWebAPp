@@ -53,3 +53,37 @@ Open FLP is built to live where producers already work:
 We are turning the "black box" of music production into an open book. By combining a clear business model—driving traffic to legitimate VST vendors—with a community-led reverse engineering effort, Open FLP is positioned to be the central hub for the next generation of producers.
 
 **Join the reconstruction.**
+
+---
+
+## ## Development
+
+### **Development Modes**
+
+The webapp supports two primary development modes, controlled via environment variables in `.env.development`.
+
+#### **1. Standalone Mode (Default)**
+In this mode, the webapp runs without requiring the Go backend or AWS Cognito to be active. It uses high-fidelity mock data and simulated network latency.
+
+*   **How to enable:** Set `VITE_STANDALONE=true` in `.env.development`.
+*   **Use case:** UI/UX development, frontend testing, or working in environments without backend access.
+*   **Visual Indicator:** A "Standalone" badge will appear in the top navigation bar.
+
+#### **2. Real Backend Mode**
+In this mode, the webapp attempts to connect to the local Go server and use real AWS Cognito authentication.
+
+*   **How to enable:** Set `VITE_STANDALONE=false` in `.env.development`.
+*   **API URL:** Ensure `VITE_API_URL` points to your running backend (default: `http://localhost:8080`).
+*   **Requirement:** You must have the `server` component running and valid Cognito credentials configured.
+
+### **Getting Started**
+
+1.  Install dependencies:
+    ```bash
+    npm install
+    ```
+2.  Start the development server:
+    ```bash
+    npm run dev
+    ```
+3.  The app will be available at `http://localhost:5173`.
