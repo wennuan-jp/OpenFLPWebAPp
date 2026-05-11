@@ -8,6 +8,11 @@ export interface Plugin {
 }
 
 export interface ResolutionResult {
+  id: string;
+  name: string;
+  description: string;
+  genre: string;
+  tags: string[];
   plugins: Plugin[];
   error: string | null;
 }
@@ -32,6 +37,11 @@ const MOCK_PROJECTS: FLPProject[] = [
 // Detailed mock results for specific projects
 const MOCK_DETAILS: Record<string, ResolutionResult> = {
   '1': {
+    id: '1',
+    name: 'Future Bass Masterclass.flp',
+    description: 'A high-energy project featuring multi-layered synthesis and complex rhythmic patterns.',
+    genre: 'Future Bass',
+    tags: ['Electronic', 'Serum', 'Mastering'],
     plugins: [
       { name: 'Main Synth', plugin_name: 'Serum', type: 'Channel', is_missing: false },
       { name: 'Sub Power', plugin_name: 'Vital', type: 'Channel', is_missing: false },
@@ -41,6 +51,11 @@ const MOCK_DETAILS: Record<string, ResolutionResult> = {
     error: null
   },
   '2': {
+    id: '2',
+    name: 'Techno_Rumble_Template.flp',
+    description: 'Dark and driving techno template with a heavy focus on industrial textures.',
+    genre: 'Techno',
+    tags: ['Techno', 'Industrial', 'Drums'],
     plugins: [
       { name: 'Kick Drum', plugin_name: 'Fruity Sampler', type: 'Channel', is_missing: false },
       { name: 'Rumble Bass', plugin_name: '3x Osc', type: 'Channel', is_missing: false },
@@ -51,6 +66,11 @@ const MOCK_DETAILS: Record<string, ResolutionResult> = {
 };
 
 const DEFAULT_UPLOAD_RESULT: ResolutionResult = {
+  id: 'temp-id',
+  name: 'New Project',
+  description: '',
+  genre: 'Other',
+  tags: [],
   plugins: [
     { name: 'Lead Synth', plugin_name: 'Serum', type: 'Channel', is_missing: false },
     { name: 'Sub Bass', plugin_name: 'Vital', type: 'Channel', is_missing: false },

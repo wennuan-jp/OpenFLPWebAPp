@@ -1,4 +1,5 @@
 import { isStandalone, simulateDelay } from './config';
+import { getCognitoLoginUrl } from './authConfig';
 
 export interface User {
   id: string;
@@ -16,15 +17,17 @@ const MOCK_USER: User = {
 export const authService = {
   async login(email: string, _password?: string): Promise<void> {
     if (isStandalone) {
-      console.log('[Standalone Mode] Simulating Login for:', email);
-      await simulateDelay(800);
-      const mockToken = 'mock_token_' + btoa(email).substring(0, 10);
-      localStorage.setItem('openflp_token', mockToken);
-      window.location.href = '/';
+      console.log('[Standalone Mode] Simulating login for:', email);
+      await simulateDelay(1000);
+      localStorage.setItem('auth_token', 'mock-jwt-token');
+      localStorage.setItem('user_email', email);
       return;
     }
-    // Real logic would be a fetch to your auth endpoint
-    alert('Real Auth logic not implemented yet.');
+
+    // Real Mode: Redirect to Cognito Hosted UI
+    console.log('[Production Mode] Redirecting to Cognito...');
+    const loginUrl = getCognitoLoginUrl();
+    window.location.href = loginUrl;
   },
 
   async signIn(): Promise<void> {

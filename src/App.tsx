@@ -6,10 +6,20 @@ import LoginPage from './components/LoginPage'
 import BrowseFLPs from './components/BrowseFLPs'
 import MyPage from './components/MyPage'
 import { authService } from './services/authService'
+import { isStandalone } from './services/config'
 
 // Layout wrapper for consistent styling
 const Layout: React.FC<{ children: React.ReactNode, isLoggedIn: boolean, onSignOut: () => void }> = ({ children, isLoggedIn, onSignOut }) => {
   const navigate = useNavigate();
+  
+  const handleSignIn = () => {
+    if (isStandalone) {
+      navigate('/login');
+    } else {
+      authService.login(''); // This will redirect to Cognito
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* ... blobs ... */}
@@ -55,7 +65,7 @@ const Layout: React.FC<{ children: React.ReactNode, isLoggedIn: boolean, onSignO
             <button className="btn btn-outline" onClick={onSignOut} style={{ padding: '0.5rem 1.25rem', fontSize: '0.85rem' }}>Sign Out</button>
           </div>
         ) : (
-          <button className="btn btn-primary" onClick={() => navigate('/login')} style={{ padding: '0.5rem 1.5rem', fontSize: '0.85rem' }}>Sign In</button>
+          <button className="btn btn-primary" onClick={handleSignIn} style={{ padding: '0.5rem 1.5rem', fontSize: '0.85rem' }}>Sign In</button>
         )}
       </header>
 

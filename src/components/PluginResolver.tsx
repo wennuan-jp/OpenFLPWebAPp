@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, FileAudio, AlertCircle, CheckCircle, Info, Save, X, ChevronDown, Search, Loader2, Calendar, User, Database, Hash, Download, Folder } from 'lucide-react';
+import { FileAudio, AlertCircle, Info, Save, X, ChevronDown, Search, Loader2, Calendar, User, Database, Hash, Download, Folder } from 'lucide-react';
 import { pluginService } from '../services/pluginService';
-
-interface Plugin {
-  name: string;
-  plugin_name: string;
-  type: string;
-  is_missing?: boolean;
-}
 
 interface PluginResolverProps {
   projectId?: string | null;
@@ -15,6 +8,13 @@ interface PluginResolverProps {
 }
 
 const GENRES = ['Electronic', 'Hip Hop', 'Rock', 'Pop', 'Jazz', 'Classical', 'Ambient', 'Techno', 'House', 'Future Bass', 'Other'];
+
+interface Plugin {
+  name: string;
+  plugin_name: string;
+  type: string;
+  is_missing?: boolean;
+}
 
 const PluginResolver: React.FC<PluginResolverProps> = ({ projectId, isLoggedIn }) => {
   const [file, setFile] = useState<File | null>(null);
@@ -38,6 +38,29 @@ const PluginResolver: React.FC<PluginResolverProps> = ({ projectId, isLoggedIn }
 
   const isViewMode = !!projectId;
 
+  // Group and merge plugins for display as per original design
+  const { displayInstruments, displayEffects } = React.useMemo(() => {
+    const instMap = new Map<string, string[]>();
+    const fxMap = new Map<string, number>();
+    
+    plugins.forEach(p => {
+      if (p.type === 'Channel') {
+        const channels = instMap.get(p.plugin_name) || [];
+        if (!channels.includes(p.name)) {
+          channels.push(p.name);
+        }
+        instMap.set(p.plugin_name, channels);
+      } else if (p.type === 'Effect') {
+        fxMap.set(p.plugin_name, (fxMap.get(p.plugin_name) || 0) + 1);
+      }
+    });
+    
+    return {
+      displayInstruments: Array.from(instMap.entries()).sort((a, b) => a[0].localeCompare(b[0])),
+      displayEffects: Array.from(fxMap.entries()).sort((a, b) => a[0].localeCompare(b[0]))
+    };
+  }, [plugins]);
+
   useEffect(() => {
     if (projectId) {
       const loadDetails = async () => {
@@ -47,10 +70,10 @@ const PluginResolver: React.FC<PluginResolverProps> = ({ projectId, isLoggedIn }
           setPlugins(result.plugins);
           setError(result.error);
           
-          setTitle(projectId === '1' ? 'Future Bass Masterclass' : 'Project ' + projectId);
-          setDescription('A high-energy project featuring multi-layered synthesis and complex rhythmic patterns. Ideal for modern electronic music production.');
-          setGenre(projectId === '1' ? 'Future Bass' : 'Electronic');
-          setTags(['Electronic', 'Serum', 'Mastering']);
+          setTitle(result.name || 'Project ' + projectId);
+          setDescription(result.description || 'No description available.');
+          setGenre(result.genre || GENRES[0]);
+          setTags(result.tags || []);
         } catch (err) {
           setError('Failed to load project details');
         } finally {
@@ -73,7 +96,6 @@ const PluginResolver: React.FC<PluginResolverProps> = ({ projectId, isLoggedIn }
       }
       
       setFile(selectedFile);
-      setTitle(selectedFile.name.replace(/\.(flp|zip)$/i, ''));
       setError(null);
       
       setLoading(true);
@@ -81,6 +103,11 @@ const PluginResolver: React.FC<PluginResolverProps> = ({ projectId, isLoggedIn }
         const result = await pluginService.uploadProjectBundle(selectedFile);
         setPlugins(result.plugins);
         setError(result.error);
+        
+        setTitle(result.name || selectedFile.name.replace(/\.(flp|zip)$/i, ''));
+        setDescription(result.description || '');
+        setGenre(result.genre || GENRES[0]);
+        setTags(result.tags || []);
       } catch (err) {
         setError('An error occurred during resolution');
       } finally {
@@ -221,29 +248,50 @@ const PluginResolver: React.FC<PluginResolverProps> = ({ projectId, isLoggedIn }
                 <Info size={14} /> Source Bundle: {file.name}
               </p>
             )}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {plugins.map((plugin, index) => (
-                <div key={index} className="glass" style={{ padding: '1.25rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.03)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ width: '36px', height: '36px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Database size={18} color="var(--text-secondary)" />
-                    </div>
-                    <div>
-                      <div style={{ fontWeight: 600, fontSize: '1rem' }}>{plugin.name}</div>
-                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{plugin.type}</div>
-                    </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+              {displayInstruments.length > 0 && (
+                <section>
+                  <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: '1rem', fontWeight: 700 }}>Instruments</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {displayInstruments.map(([vstName, channels], index) => (
+                      <div key={index} className="glass" style={{ padding: '1.25rem', background: 'rgba(255, 255, 255, 0.03)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                          <Database size={18} color="var(--accent-color)" />
+                          <span style={{ fontWeight: 600, fontSize: '1.1rem' }}>{vstName}</span>
+                        </div>
+                        <ul style={{ listStyle: 'none', paddingLeft: '1.5rem', margin: 0, borderLeft: '1px solid var(--border-color)' }}>
+                          {channels.map((chan, cIdx) => (
+                            <li key={cIdx} style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.25rem', position: 'relative' }}>
+                              <span style={{ position: 'absolute', left: '-1.5rem', top: '50%', width: '0.5rem', height: '1px', background: 'var(--border-color)' }}></span>
+                              {chan}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
                   </div>
-                  {plugin.is_missing ? (
-                    <div style={{ color: 'var(--warning-color)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', fontWeight: 500, background: 'rgba(245, 158, 11, 0.1)', padding: '0.4rem 0.8rem', borderRadius: '20px' }}>
-                      <AlertCircle size={14} /> Missing
-                    </div>
-                  ) : (
-                    <div style={{ color: 'var(--success-color)', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', fontWeight: 500, background: 'rgba(16, 185, 129, 0.1)', padding: '0.4rem 0.8rem', borderRadius: '20px' }}>
-                      <CheckCircle size={14} /> Found
-                    </div>
-                  )}
-                </div>
-              ))}
+                </section>
+              )}
+
+              {displayEffects.length > 0 && (
+                <section>
+                  <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)', marginBottom: '1rem', fontWeight: 700 }}>Effects</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {displayEffects.map(([vstName, count], index) => (
+                      <div key={index} className="glass" style={{ padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255, 255, 255, 0.03)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <Hash size={16} color="var(--text-secondary)" />
+                          <span style={{ fontWeight: 500 }}>{vstName}</span>
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--accent-color)', fontWeight: 600, background: 'var(--accent-glow)', padding: '0.25rem 0.6rem', borderRadius: '8px' }}>
+                          Used {count}x
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
           </div>
 
